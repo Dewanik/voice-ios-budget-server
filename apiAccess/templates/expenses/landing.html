@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice iOS Budget Server - Smart Expense Tracking with Siri</title>
+    <meta name="description" content="Track expenses effortlessly with voice commands using Siri. Beautiful reports, budget management, and secure access for iOS users.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .hero-section {
+            padding: 100px 0;
+            color: white;
+            text-align: center;
+        }
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .hero-section p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .cta-section {
+            background: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+        .demo-section {
+            background: #f8f9fa;
+            padding: 60px 0;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-microphone me-2"></i>
+                Voice Budget Server
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#demo">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/accounts/login/">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1>Track Expenses with Your Voice</h1>
+            <p class="lead">Say goodbye to manual expense tracking. Use Siri to log expenses instantly and get beautiful reports with budget insights.</p>
+            <a href="/accounts/login/" class="btn-custom">
+                <i class="fas fa-sign-in-alt me-2"></i>Get Started
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-4 text-dark mb-3">Powerful Features</h2>
+                    <p class="lead text-muted">Everything you need for smart expense management</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <h4>Voice Commands</h4>
+                        <p>Simply say "Hey Siri, add expense $25 for groceries" and it's logged instantly. No typing required!</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h4>Smart Reports</h4>
+                        <p>Beautiful charts and summaries showing your spending patterns, category breakdowns, and budget status.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4>Secure & Private</h4>
+                        <p>User authentication ensures only authorized access. Your financial data stays private and secure.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h4>Flexible Timeframes</h4>
+                        <p>View expenses by day, week, month, or custom date ranges. Track spending across different periods.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <h4>Budget Management</h4>
+                        <p>Set monthly budgets for categories or overall spending. Get alerts when you're approaching limits.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h4>iOS Integration</h4>
+                        <p>Seamlessly works with iOS Siri Shortcuts. Perfect for iPhone and iPad users who want hands-free tracking.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4">
+                    <h2 class="display-5 text-dark mb-4">See It In Action</h2>
+                    <p class="lead text-muted mb-4">
+                        Experience the power of voice-activated expense tracking. Our demo shows how easy it is to manage your finances.
+                    </p>
+                    <div class="demo-card">
+                        <h5><i class="fas fa-play-circle text-primary me-2"></i>How It Works</h5>
+                        <ol class="text-start mt-3">
+                            <li>Activate Siri on your iOS device</li>
+                            <li>Say "Add expense [amount] for [category]"</li>
+                            <li>View detailed reports on the web dashboard</li>
+                            <li>Set budgets and track your financial goals</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="demo-card text-center">
+                        <i class="fas fa-mobile-screen-button feature-icon"></i>
+                        <h4>iOS Voice Commands</h4>
+                        <div class="bg-light p-3 rounded mb-3">
+                            <p class="mb-1"><strong>You say:</strong></p>
+                            <p class="text-primary">"Hey Siri, add expense $45 for dinner"</p>
+                        </div>
+                        <div class="bg-success text-white p-3 rounded">
+                            <p class="mb-1"><strong>System responds:</strong></p>
+                            <p>"Added expense $45.00 to dinner"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="display-4 mb-3">Ready to Get Started?</h2>
+                    <p class="lead text-muted mb-4">
+                        Join thousands of users who have simplified their expense tracking with voice commands.
+                    </p>
+                    <a href="/accounts/login/" class="btn-custom me-3">
+                        <i class="fas fa-rocket me-2"></i>Start Tracking Now
+                    </a>
+                    <a href="#features" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-copyright me-2"></i>2026 Voice iOS Budget Server.
+                Built with Django & Bootstrap. Made with <i class="fas fa-heart text-danger"></i> for iOS users.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

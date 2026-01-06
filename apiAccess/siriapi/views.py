@@ -5,31 +5,54 @@ from decimal import Decimal, InvalidOperation
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth import authenticate
 from .models import Expense, SiriRequest
 
 logger = logging.getLogger(__name__)
 
 SIRI_TOKEN = os.environ.get('SIRI_TOKEN')
 
-def authenticate(request):
+def authenticate_token(request):
+    """Authenticate using Bearer token only"""
     auth_header = request.META.get('HTTP_AUTHORIZATION', '')
     if not auth_header.startswith('Bearer '):
         return False
     token = auth_header[7:]  # Remove 'Bearer '
     return token == SIRI_TOKEN
 
+def authenticate_user(request):
+    """Authenticate user with token + username/password"""
+    # First check token
+    if not authenticate_token(request):
+        return None
+    
+    # Then check user credentials
+    try:
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return None
+            
+        user = authenticate(username=username, password=password)
+        return user
+    except (json.JSONDecodeError, KeyError):
+        return None
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def ping(request):
-    if not authenticate(request):
+    if not authenticate_token(request):
         return JsonResponse({'ok': False, 'error': 'Unauthorized'}, status=401)
     return JsonResponse({'ok': True, 'message': 'pong'})
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def add_expense(request):
-    if not authenticate(request):
-        return JsonResponse({'ok': False, 'error': 'Unauthorized'}, status=401)
+    user = authenticate_user(request)
+    if not user:
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - invalid token or credentials'}, status=401)
 
     try:
         data = json.loads(request.body)
@@ -66,7 +89,7 @@ def add_expense(request):
             })
 
     # Create expense
-    expense = Expense.objects.create(amount=amount, category=category, note=note)
+    expense = Expense.objects.create(user=user, amount=amount, category=category, note=note)
 
     # Record request_id if provided
     if request_id:

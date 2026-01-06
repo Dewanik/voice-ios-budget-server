@@ -7,10 +7,15 @@ from django.contrib.auth.decorators import login_required
 from siriapi.models import Expense, Budget
 
 
-def get_expenses_report(start_date, end_date, title):
-    expenses = Expense.objects.filter(created_at__date__range=(start_date, end_date)).order_by('-created_at')
+def landing_page(request):
+    """Public landing page showcasing the app features"""
+    return render(request, 'expenses/landing.html')
+
+
+def get_expenses_report(user, start_date, end_date, title):
+    expenses = Expense.objects.filter(user=user, created_at__date__range=(start_date, end_date)).order_by('-created_at')
     total = expenses.aggregate(total=Sum('amount'))['total'] or 0
-    totals_by_category = list(Expense.objects.filter(created_at__date__range=(start_date, end_date)).values('category').annotate(total=Sum('amount')).order_by('-total'))
+    totals_by_category = list(Expense.objects.filter(user=user, created_at__date__range=(start_date, end_date)).values('category').annotate(total=Sum('amount')).order_by('-total'))
     expenses_list = [
         {
             'id': e.id,
@@ -24,7 +29,7 @@ def get_expenses_report(start_date, end_date, title):
 
     # Budgets for the period (assuming monthly budgets)
     period_str = start_date.strftime('%Y-%m')
-    budgets = Budget.objects.filter(period=period_str)
+    budgets = Budget.objects.filter(user=user, period=period_str)
     overall_budget = budgets.filter(category='').first()
     category_budgets = {b.category: b.amount for b in budgets.exclude(category='')}
 
@@ -65,7 +70,7 @@ def expenses_week(request):
     monday = now - timedelta(days=now.weekday())
     start = monday.date()
     end = (monday + timedelta(days=6)).date()
-    context = get_expenses_report(start, end, "This Week's Expenses")
+    context = get_expenses_report(request.user, start, end, "This Week's Expenses")
     return render(request, 'expenses/report.html', context)
 
 
@@ -79,7 +84,7 @@ def expenses_month(request):
     now = timezone.now()
     start = now.replace(day=1).date()
     end = now.date()
-    context = get_expenses_report(start, end, "Current Month Expenses")
+    context = get_expenses_report(request.user, start, end, "Current Month Expenses")
     return render(request, 'expenses/report.html', context)
 
 
@@ -102,7 +107,7 @@ def expenses_month_specific(request, year_month=None):
         title = f"Expenses for {start.strftime('%B %Y')}"
     except ValueError:
         return render(request, 'expenses/error.html', {'error': 'Invalid month format. Use YYYY-MM'})
-    context = get_expenses_report(start, end, title)
+    context = get_expenses_report(request.user, start, end, title)
     return render(request, 'expenses/report.html', context)
 
 
@@ -128,7 +133,7 @@ def expenses_range(request):
         title = f"Expenses from {start.strftime('%B %d, %Y')} to {end.strftime('%B %d, %Y')}"
     except ValueError:
         return render(request, 'expenses/error.html', {'error': 'Invalid date format. Use YYYY-MM-DD'})
-    context = get_expenses_report(start, end, title)
+    context = get_expenses_report(request.user, start, end, title)
     return render(request, 'expenses/report.html', context)
 
 
@@ -136,7 +141,7 @@ def expenses_range(request):
 @login_required
 def expenses_today(request):
     today = timezone.now().date()
-    context = get_expenses_report(today, today, "Today's Expenses")
+    context = get_expenses_report(request.user, today, today, "Today's Expenses")
     return render(request, 'expenses/report.html', context)
 
 
@@ -152,16 +157,16 @@ def expenses_budgets(request):
             if period and amount:
                 try:
                     amount = float(amount)
-                    Budget.objects.get_or_create(period=period, category=category, defaults={'amount': amount})
+                    Budget.objects.get_or_create(user=request.user, period=period, category=category, defaults={'amount': amount})
                 except ValueError:
                     pass
         elif action == 'delete':
             budget_id = request.POST.get('budget_id')
             if budget_id:
-                Budget.objects.filter(id=budget_id).delete()
-        return redirect('/expenses/budgets/')
+                Budget.objects.filter(user=request.user, id=budget_id).delete()
+        return redirect('/budgets/')
 
-    budgets = Budget.objects.all().order_by('-created_at')
+    budgets = Budget.objects.filter(user=request.user).order_by('-created_at')
     context = {
         'title': 'Manage Budgets',
         'budgets': budgets,

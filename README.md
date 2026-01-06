@@ -44,17 +44,26 @@ A Django-based server application that allows you to track personal expenses usi
 
 1. **Install Shortcuts App**: Ensure the Shortcuts app is installed on your iOS device
 
-2. **Create a New Shortcut**:
+2. **Create User Account**: 
+   - Visit your server and create a user account via `/accounts/login/`
+   - Or ask the administrator to create an account for you
+
+3. **Create a New Shortcut**:
    - Open the Shortcuts app
    - Tap the "+" icon to create a new shortcut
    - Add an "Add to Siri" action
 
-3. **Configure the Shortcut**:
+4. **Configure the Shortcut**:
    - Add a "Run Shortcut" action
    - Set the shortcut to call your server's API endpoint
-   - Configure parameters for amount, category, and optional note
+   - Configure parameters for amount, category, username, password, and optional note
 
-4. **Example Shortcut Configuration**:
+5. **One-Time Authentication Setup**:
+   - When creating the shortcut, you'll need to provide your username and password
+   - These credentials will be stored securely in the shortcut for future use
+   - **Security Note**: Your password is stored locally on your device in the shortcut
+
+6. **Example Shortcut Configuration**:
    ```
    URL: https://your-server.com/api/siri/add-expense/
    Method: POST
@@ -63,6 +72,8 @@ A Django-based server application that allows you to track personal expenses usi
      Content-Type: application/json
    Body:
      {
+       "username": "your_username",
+       "password": "your_password",
        "amount": "Input from Siri",
        "category": "Input from Siri",
        "note": "Optional note",
@@ -70,7 +81,7 @@ A Django-based server application that allows you to track personal expenses usi
      }
    ```
 
-5. **Voice Activation**:
+7. **Voice Activation**:
    - Say "Hey Siri, add expense" followed by the amount and category
    - Example: "Hey Siri, add expense $25 for groceries"
 
@@ -164,24 +175,27 @@ All report views require user authentication. Access them at:
 
 ### Available Reports
 
-1. **Today's Expenses**: `/expenses/today/`
+1. **Landing Page**: `/`
+   - Public homepage showcasing features and getting started guide
+
+2. **Today's Expenses**: `/today/`
    - Shows all expenses logged today
 
-2. **This Week's Expenses**: `/expenses/week/`
+3. **This Week's Expenses**: `/week/`
    - Expenses from Monday to Sunday of the current week
 
-3. **Current Month Expenses**: `/expenses/month/`
+4. **Current Month Expenses**: `/month/`
    - All expenses for the current month
 
-4. **Specific Month**: `/expenses/month/YYYY-MM/`
+5. **Specific Month**: `/month/YYYY-MM/`
    - View expenses for any specific month
-   - Example: `/expenses/month/2024-01/`
+   - Example: `/month/2024-01/`
 
-5. **Custom Date Range**: `/expenses/range/?start=YYYY-MM-DD&end=YYYY-MM-DD`
+6. **Custom Date Range**: `/range/?start=YYYY-MM-DD&end=YYYY-MM-DD`
    - View expenses between any two dates
-   - Example: `/expenses/range/?start=2024-01-01&end=2024-01-31`
+   - Example: `/range/?start=2024-01-01&end=2024-01-31`
 
-6. **Budget Management**: `/expenses/budgets/`
+7. **Budget Management**: `/budgets/`
    - Set monthly budgets for overall spending or specific categories
    - View budget vs. actual spending comparisons
 
@@ -196,18 +210,27 @@ All report views require user authentication. Access them at:
 
 ### Authentication Requirements
 - All expense report and budget management pages require user login
-- API endpoints use Bearer token authentication
+- API endpoints require both Bearer token authentication AND user credentials
 - Admin interface accessible only to superusers
+- Each user can only access their own expenses and budgets
 
 ### User Management
 1. **Create Users**: Use Django admin or management commands
 2. **Password Policies**: Enforced by Django's built-in validators
 3. **Session Management**: Automatic logout on browser close
+4. **Data Isolation**: Users cannot see other users' financial data
 
 ### API Security
-- **Token Authentication**: API calls require `Authorization: Bearer <token>` header
+- **Dual Authentication**: API calls require both `Authorization: Bearer <token>` header AND user credentials in request body
+- **User Association**: All expenses are automatically linked to the authenticated user
 - **Idempotency**: Prevents duplicate expense entries via request IDs
 - **Input Validation**: Strict validation of amounts, categories, and data formats
+
+### Siri Integration Security
+- **Shortcut Authentication**: Users must configure their username/password in Siri shortcuts
+- **Local Storage**: Credentials are stored securely on the user's iOS device
+- **Token + User Verification**: Both server token and user credentials must be valid
+- **One-Time Setup**: Authentication is configured once when creating the shortcut
 
 ### Data Protection
 - **HTTPS Required**: Always use HTTPS in production
@@ -224,6 +247,11 @@ All report views require user authentication. Access them at:
 
 ## API Reference
 
+### Authentication
+All API endpoints require:
+- **Bearer Token**: `Authorization: Bearer <SIRI_TOKEN>`
+- **User Credentials**: For expense operations, include `username` and `password` in the request body
+
 ### Endpoints
 
 #### `GET /api/siri/ping/`
@@ -231,7 +259,7 @@ Test API connectivity.
 **Headers**: `Authorization: Bearer <token>`
 
 #### `POST /api/siri/add-expense/`
-Add a new expense.
+Add a new expense for an authenticated user.
 **Headers**: 
 - `Authorization: Bearer <token>`
 - `Content-Type: application/json`
@@ -239,12 +267,19 @@ Add a new expense.
 **Body**:
 ```json
 {
+  "username": "your_username",
+  "password": "your_password",
   "amount": 25.50,
   "category": "Groceries",
   "note": "Weekly shopping",
   "request_id": "optional-unique-id"
 }
 ```
+
+**Security Notes**:
+- Expenses are automatically associated with the authenticated user
+- Each user can only view their own expenses and budgets
+- Failed authentication attempts are logged and rejected
 
 ## Contributing
 
