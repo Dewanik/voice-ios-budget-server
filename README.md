@@ -270,12 +270,12 @@ All report views require user authentication. Access them at:
 - Monitor access logs for suspicious activity
 - Use environment variables for sensitive configuration
 
-## API Reference
+### API Reference
 
 ### Authentication
 All API endpoints require:
 - **Bearer Token**: `Authorization: Bearer <SIRI_TOKEN>`
-- **User Credentials**: For expense operations, include `username` and `password` in the request body
+- **User Credentials**: For expense operations, include `username` and `password` in the request body (POST) or query parameters (GET)
 
 ### Endpoints
 
@@ -283,7 +283,7 @@ All API endpoints require:
 Test API connectivity.
 **Headers**: `Authorization: Bearer <token>`
 
-#### `POST /api/siri/add-expense/`
+#### `POST /api/siri/add-expense/` (Recommended)
 Add a new expense for an authenticated user.
 **Headers**: 
 - `Authorization: Bearer <token>`
@@ -301,10 +301,48 @@ Add a new expense for an authenticated user.
 }
 ```
 
+#### `GET /api/siri/add-expense/` (For Debugging)
+Same as POST but accepts parameters via query string. **Not recommended for production use with sensitive data.**
+
+**Example URL**: `/api/siri/add-expense/?username=your_username&password=your_password&amount=25.50&category=Groceries`
+
 **Security Notes**:
 - Expenses are automatically associated with the authenticated user
 - Each user can only view their own expenses and budgets
 - Failed authentication attempts are logged and rejected
+- Use POST method for production; GET is only for testing
+
+## Troubleshooting
+
+### Siri Shortcut Issues
+
+**"Method Not Allowed" Error:**
+- Ensure your shortcut is configured to use **POST** method (not GET)
+- Check that the URL ends with `/api/siri/add-expense/`
+- Verify the Content-Type header is set to `application/json`
+
+**"Network Lost" in Siri:**
+- Check your internet connection
+- Verify the server URL is correct and accessible
+- Ensure the SIRI_TOKEN environment variable is set on the server
+- Try testing the shortcut manually in the Shortcuts app first
+
+**Authentication Errors:**
+- Verify your username and password are correct
+- Check that credentials are included in the shortcut (either as static text or input prompts)
+- Ensure the Bearer token in headers matches the server's SIRI_TOKEN
+
+**Testing Your Shortcut:**
+1. Open the Shortcuts app
+2. Run your shortcut manually (don't use Siri voice)
+3. Check the shortcut's output for error messages
+4. Use GET method temporarily for debugging (see API reference above)
+
+**Common Issues:**
+- **Wrong HTTP Method**: Make sure it's POST, not GET
+- **Missing Headers**: Include both Authorization and Content-Type headers
+- **JSON Format**: Ensure the body is valid JSON with proper quotes
+- **Server URL**: Double-check the complete URL including protocol (https://)
 
 ## Contributing
 

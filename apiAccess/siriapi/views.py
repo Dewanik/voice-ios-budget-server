@@ -14,30 +14,44 @@ SIRI_TOKEN = os.environ.get('SIRI_TOKEN')
 
 def authenticate_token(request):
     """Authenticate using Bearer token only"""
+    if not SIRI_TOKEN:
+        logger.error("SIRI_TOKEN environment variable is not set")
+        return False
     auth_header = request.META.get('HTTP_AUTHORIZATION', '')
     if not auth_header.startswith('Bearer '):
         return False
     token = auth_header[7:]  # Remove 'Bearer '
     return token == SIRI_TOKEN
 
+
 def authenticate_user(request):
     """Authenticate user with token + username/password"""
     # First check token
     if not authenticate_token(request):
+        logger.warning("Token authentication failed")  # Moved before return for reachability
         return None
     
     # Then check user credentials
     try:
-        data = json.loads(request.body)
+        if request.method == 'POST':
+            data = json.loads(request.body)
+        else:  # GET request
+            data = request.GET.dict()
+        
         username = data.get('username')
         password = data.get('password')
         
         if not username or not password:
+            logger.warning("Missing username or password")
             return None
             
         user = authenticate(username=username, password=password)
+        if not user:
+            logger.warning(f"User authentication failed for username: {username}")
+        
         return user
-    except (json.JSONDecodeError, KeyError):
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.error(f"Error parsing request data: {e}")
         return None
 
 @csrf_exempt
@@ -48,17 +62,22 @@ def ping(request):
     return JsonResponse({'ok': True, 'message': 'pong'})
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def add_expense(request):
     user = authenticate_user(request)
     if not user:
-        return JsonResponse({'ok': False, 'error': 'Unauthorized - invalid token or credentials'}, status=401)
-
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
-
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - invalid credentials'}, status=401)
+    
+    # Get data from POST body or GET parameters
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
+    else:  # GET request (for debugging)
+        data = request.GET.dict()
+        # Note: GET requests are not recommended for production use with sensitive data
+    
     amount = data.get('amount')
     category = data.get('category', '').strip()
     note = data.get('note', '')
