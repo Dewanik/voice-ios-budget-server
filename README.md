@@ -81,7 +81,32 @@ A Django-based server application that allows you to track personal expenses usi
      }
    ```
 
-7. **Voice Activation**:
+7. **Configure User Credentials in Shortcut**:
+   - In the Shortcuts app, when setting up the shortcut, you'll need to add your username and password
+   - **Option A: Static Credentials (Recommended for personal use)**:
+     - Add a "Text" action for username: Enter your username as plain text
+     - Add a "Text" action for password: Enter your password as plain text
+     - Connect these to the JSON body in the "Run Shortcut" action
+   - **Option B: Ask for Credentials Each Time (More secure)**:
+     - Add "Ask for Input" actions for both username and password
+     - This will prompt you to enter credentials each time you use the shortcut
+   - **Security Note**: For convenience, most users store credentials statically. Your password is only stored locally on your iOS device.
+
+8. **Complete Shortcut Flow Example**:
+   ```
+   Shortcut Actions:
+   1. Ask for Input: "Enter expense amount" → Store as "Amount"
+   2. Ask for Input: "Enter category" → Store as "Category" 
+   3. Text: "your_username" → Store as "Username"
+   4. Text: "your_password" → Store as "Password"
+   5. Run Shortcut:
+      - URL: https://your-server.com/api/siri/add-expense/
+      - Method: POST
+      - Headers: Authorization: Bearer YOUR_SIRI_TOKEN
+      - Body: {"username": Username, "password": Password, "amount": Amount, "category": Category}
+   ```
+
+9. **Voice Activation**:
    - Say "Hey Siri, add expense" followed by the amount and category
    - Example: "Hey Siri, add expense $25 for groceries"
 
