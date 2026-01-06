@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 1200px; }
+        .card { margin-bottom: 20px; }
+        .total-amount { font-size: 2rem; font-weight: bold; color: #28a745; }
+        .expense-item { border-left: 4px solid #007bff; padding-left: 10px; margin-bottom: 10px; }
+        .category-total { background-color: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+        .budget-status { font-weight: bold; }
+        .over-budget { color: #dc3545; }
+        .under-budget { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">{{ title }}</h1>
+        <p class="text-muted">Period: {{ period_start|date:"M j, Y" }} - {{ period_end|date:"M j, Y" }}</p>
+
+        <!-- Navigation -->
+        <nav class="mb-4">
+            <a href="/expenses/today/" class="btn btn-outline-primary">Today</a>
+            <a href="/expenses/week/" class="btn btn-outline-primary">This Week</a>
+            <a href="/expenses/month/" class="btn btn-outline-primary">This Month</a>
+            <a href="/expenses/budgets/" class="btn btn-outline-primary">Manage Budgets</a>
+        </nav>
+
+        <!-- Forms for custom selection -->
+        {% if show_form %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>Select Date Range</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="start">Start Date</label>
+                            <input type="date" id="start" name="start" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end">End Date</label>
+                            <input type="date" id="end" name="end" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">View Report</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>Custom Selections</h5>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <label for="month">Select Month:</label>
+                    <input type="month" id="month" name="month" class="form-control d-inline w-auto" required>
+                    <button type="submit" class="btn btn-secondary">Go</button>
+                </form>
+                <form method="post" class="d-inline ms-3">
+                    {% csrf_token %}
+                    <label for="start">Date Range:</label>
+                    <input type="date" id="start" name="start" class="form-control d-inline w-auto" required>
+                    <input type="date" id="end" name="end" class="form-control d-inline w-auto" required>
+                    <button type="submit" class="btn btn-secondary">Go</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Amount</h5>
+                        <p class="total-amount">${{ total_amount|floatformat:2 }}</p>
+                        {% if budget_info.overall_budget %}
+                        <p class="budget-status {% if budget_info.remaining < 0 %}over-budget{% else %}under-budget{% endif %}">
+                            Budget: ${{ budget_info.overall_budget|floatformat:2 }}<br>
+                            Remaining: ${{ budget_info.remaining|floatformat:2 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Totals by Category</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="expenseChart" width="400" height="200"></canvas>
+                        {% for category in totals_by_category %}
+                        <div class="category-total d-flex justify-content-between">
+                            <span>{{ category.category }}</span>
+                            <span class="fw-bold">${{ category.total|floatformat:2 }}
+                                {% if category.budget %}
+                                / ${{ category.budget|floatformat:2 }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <p>No expenses in this period.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Expense Details</h5>
+            </div>
+            <div class="card-body">
+                {% for expense in expenses %}
+                <div class="expense-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ expense.category }} - ${{ expense.amount|floatformat:2 }}</h6>
+                            {% if expense.note %}
+                            <p class="mb-1 text-muted">{{ expense.note }}</p>
+                            {% endif %}
+                            <small class="text-muted">{{ expense.created_at|date:"M j, Y g:i A" }}</small>
+                        </div>
+                        <small class="text-muted">ID: {{ expense.id }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p>No expenses found for this period.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        const data = {{ chart_data|safe }};
+        const labels = data.map(item => item.category);
+        const values = data.map(item => parseFloat(item.total));
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
