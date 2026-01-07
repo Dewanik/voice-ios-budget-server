@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Error - Voice Budget</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 500px;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .icon {
+            text-align: center;
+            font-size: 3rem;
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .error-details {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1.5rem 0;
+            color: #721c24;
+        }
+        p {
+            color: #666;
+            text-align: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: bold;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⚠</div>
+        <h1>Payment Error</h1>
+        <p>An error occurred while processing your payment:</p>
+
+        {% if error %}
+            <div class="error-details">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <p>Please try again or contact support if the problem persists.</p>
+
+        <a href="/profile/register/" class="btn btn-primary">Try Again</a>
+        <a href="/" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">Back to Home</a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

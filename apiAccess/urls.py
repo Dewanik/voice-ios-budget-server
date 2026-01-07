@@ -21,6 +21,7 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('profile/', include('userprofile.urls')),
     path('api/siri/', include('siriapi.urls')),
     path('', include('expenses.urls')),
 ]

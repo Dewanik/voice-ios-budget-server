@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Voice Budget</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 500px;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 3rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .info-box {
+            background: #f0f0f0;
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        .info-box p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+        .info-box strong {
+            color: #333;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: bold;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            text-decoration: none;
+        }
+        .next-steps {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        .next-steps h3 {
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .next-steps ol {
+            color: #666;
+            padding-left: 1.5rem;
+        }
+        .next-steps li {
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✓</div>
+        <h1>Welcome to Voice Budget!</h1>
+        <p style="color: #666; margin-bottom: 1.5rem;">Your account has been successfully created and your subscription is active.</p>
+
+        <div class="info-box">
+            <p><strong>Username:</strong> {{ username }}</p>
+            <p><strong>Email:</strong> {{ email }}</p>
+            <p><strong>Subscription:</strong> $5/month (Active)</p>
+            <p style="color: #28a745; margin-top: 1rem;"><strong>✓ Payment Confirmed</strong></p>
+        </div>
+
+        <div class="next-steps">
+            <h3>Next Steps:</h3>
+            <ol>
+                <li>Check your email for login credentials</li>
+                <li>Log in to your account to get started</li>
+                <li>Set up your Siri shortcut for voice expense tracking</li>
+                <li>Start tracking expenses with voice commands</li>
+            </ol>
+        </div>
+
+        <a href="/profile/profile/" class="btn btn-primary">Go to Your Profile</a>
+        <a href="/" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">Back to Home</a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

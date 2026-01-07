@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Voice Budget</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 500px;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem;
+            width: 100%;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        .help-text {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        .price-info {
+            background: #f0f0f0;
+            padding: 1rem;
+            border-radius: 5px;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        .price-info h3 {
+            color: #667eea;
+            margin: 0;
+        }
+        .price-info p {
+            color: #666;
+            margin: 0.5rem 0 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Voice Budget</h1>
+            <p>Start tracking your expenses with voice commands</p>
+        </div>
+
+        <div class="price-info">
+            <h3>$5/month</h3>
+            <p>Unlimited expense tracking with Siri integration</p>
+        </div>
+
+        <form method="POST" id="registerForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="error-message">
+                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="help-text">{{ form.username.help_text }}</div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="error-message">
+                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="help-text">{{ form.email.help_text }}</div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="error-message">
+                        {% for error in form.password.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="help-text">{{ form.password.help_text }}</div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+                <label for="password_confirm" class="form-label">Confirm Password</label>
+                {{ form.password_confirm }}
+                {% if form.password_confirm.errors %}
+                    <div class="error-message">
+                        {% for error in form.password_confirm.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- First Name -->
+            <div class="form-group">
+                <label for="first_name" class="form-label">First Name (Optional)</label>
+                {{ form.first_name }}
+            </div>
+
+            <!-- Last Name -->
+            <div class="form-group">
+                <label for="last_name" class="form-label">Last Name (Optional)</label>
+                {{ form.last_name }}
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Proceed to Payment ($5/month)
+            </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.5rem; color: #999; font-size: 0.9rem;">
+            Already have an account? <a href="/accounts/login/" style="color: #667eea; text-decoration: none; font-weight: bold;">Log in here</a>
+        </p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Profile - Voice Budget</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .navbar a, .navbar span {
+            color: white !important;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 2rem;
+        }
+        .profile-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .profile-header h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .user-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .info-item {
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .info-item strong {
+            color: #667eea;
+        }
+        .info-item p {
+            margin: 0.5rem 0 0 0;
+            color: #666;
+        }
+        .subscription-status {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+        .subscription-status.active {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .subscription-status.pending {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        .btn-custom {
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary-custom {
+            background: #e9ecef;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+        .btn-secondary-custom:hover {
+            background: #dee2e6;
+            color: #333;
+            text-decoration: none;
+        }
+        .expense-quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .expense-link {
+            padding: 1.5rem;
+            border-radius: 5px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+            border: 2px solid #f0f0f0;
+            text-decoration: none;
+            color: #333;
+        }
+        .expense-link:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+            color: #667eea;
+        }
+        .expense-link i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #667eea;
+        }
+        .expense-link h3 {
+            font-size: 0.95rem;
+            margin: 0.5rem 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-box h3 {
+            font-size: 2rem;
+            margin: 0;
+        }
+        .stat-box p {
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+        }
+        .recent-expenses {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .recent-expenses li {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .recent-expenses li:last-child {
+            border-bottom: none;
+        }
+        .expense-item-info {
+            flex: 1;
+        }
+        .expense-item-info h4 {
+            margin: 0;
+            color: #333;
+        }
+        .expense-item-info p {
+            margin: 0.25rem 0 0 0;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        .expense-amount {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        .logout-btn {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">🎯 Voice Budget</span>
+            <div class="navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link">{{ user.first_name|default:user.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/accounts/logout/">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <h1>👤 Your Profile</h1>
+            
+            <!-- User Information -->
+            <div class="user-info">
+                <div class="info-item">
+                    <strong>Username:</strong>
+                    <p>{{ user.username }}</p>
+                </div>
+                <div class="info-item">
+                    <strong>Email:</strong>
+                    <p>{{ user.email }}</p>
+                </div>
+                <div class="info-item">
+                    <strong>First Name:</strong>
+                    <p>{{ user.first_name|default:"Not set" }}</p>
+                </div>
+                <div class="info-item">
+                    <strong>Last Name:</strong>
+                    <p>{{ user.last_name|default:"Not set" }}</p>
+                </div>
+            </div>
+
+            <!-- Subscription Status -->
+            {% if subscription %}
+                <div class="subscription-status {{ subscription.status }}">
+                    <strong>📅 Subscription Status:</strong> 
+                    <span>{{ subscription.get_status_display }}</span>
+                    {% if subscription.next_billing_date %}
+                        <br><small>Next billing: {{ subscription.next_billing_date|date:"M d, Y" }}</small>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="subscription-status pending">
+                    <strong>⚠ No active subscription</strong>
+                    <p>Please <a href="/profile/register/">upgrade your account</a> to start tracking expenses.</p>
+                </div>
+            {% endif %}
+
+            <button class="btn btn-secondary-custom btn-custom" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                ✏️ Edit Profile
+            </button>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="section">
+            <h2>📊 Your Stats</h2>
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>{{ total_expenses }}</h3>
+                    <p>Total Expenses</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense Tracking Section -->
+        <div class="section">
+            <h2>💰 Expense Tracking</h2>
+            <p>Manage and track your expenses:</p>
+            <div class="expense-quick-links">
+                <a href="/today/" class="expense-link">
+                    <i class="fas fa-calendar-day"></i>
+                    <h3>Today's Expenses</h3>
+                </a>
+                <a href="/week/" class="expense-link">
+                    <i class="fas fa-calendar-week"></i>
+                    <h3>This Week</h3>
+                </a>
+                <a href="/month/" class="expense-link">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>This Month</h3>
+                </a>
+                <a href="/range/" class="expense-link">
+                    <i class="fas fa-filter"></i>
+                    <h3>Custom Range</h3>
+                </a>
+                <a href="/budgets/" class="expense-link">
+                    <i class="fas fa-piggy-bank"></i>
+                    <h3>Budgets</h3>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Expenses Section -->
+        {% if recent_expenses %}
+        <div class="section">
+            <h2>🔄 Recent Expenses</h2>
+            <ul class="recent-expenses">
+                {% for expense in recent_expenses %}
+                <li>
+                    <div class="expense-item-info">
+                        <h4>{{ expense.category|title }}</h4>
+                        <p>{{ expense.created_at|date:"M d, Y H:i" }}
+                            {% if expense.note %}
+                                • {{ expense.note }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="expense-amount">${{ expense.amount|floatformat:2 }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="/month/" class="btn btn-primary-custom btn-custom">View All Expenses →</a>
+        </div>
+        {% endif %}
+
+        <!-- Account Settings Section -->
+        <div class="section">
+            <h2>⚙️ Account Settings</h2>
+            <div class="btn-group" role="group">
+                <a href="/accounts/password_change/" class="btn btn-secondary-custom btn-custom">
+                    🔐 Change Password
+                </a>
+                <a href="/accounts/logout/" class="btn btn-secondary-custom btn-custom">
+                    🚪 Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/profile/profile/update/">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" name="first_name" value="{{ user.first_name }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" name="last_name" value="{{ user.last_name }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number (Optional)</label>
+                            <input type="tel" class="form-control" id="phone" name="phone_number" value="{{ user_profile.phone_number|default:'' }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-custom">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
