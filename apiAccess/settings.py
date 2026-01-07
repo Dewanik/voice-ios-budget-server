@@ -28,12 +28,9 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["talk2ledger.azurewebsites.net", "localhost", "*.azurewebsites.net"]
-
-# Trust Azure's reverse proxy headers for HTTPS
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+ALLOWED_HOSTS = ["talk2ledger.azurewebsites.net", "127.0.0.1", "localhost"]
 
 
 # Application definition
@@ -134,10 +131,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/accounts/login/'
 
-# Production security settings
+# Production security settings for Azure
 SECURE_SSL_REDIRECT = False  # Handled by Azure reverse proxy
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+
+# Trust Azure's reverse proxy headers
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # If you want to use this, add `dj-database-url` to your requirements and set
 # the DATABASE_URL environment variable in Azure.
 try:
