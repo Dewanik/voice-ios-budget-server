@@ -17,7 +17,12 @@ def authenticate_token(request):
     if not SIRI_TOKEN:
         logger.error("SIRI_TOKEN environment variable is not set")
         return False
-    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    auth_header = (
+        request.META.get('HTTP_AUTHORIZATION', '') or
+        request.META.get('HTTP_X_AUTHORIZATION', '') or
+        request.META.get('HTTP_X_ORIGINAL_AUTHORIZATION', '') or
+        request.META.get('HTTP_X_HTTP_AUTHORIZATION', '')
+    )
     if not auth_header.startswith('Bearer '):
         return False
     token = auth_header[7:]  # Remove 'Bearer '
@@ -57,16 +62,45 @@ def authenticate_user(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def ping(request):
-    if not authenticate_token(request):
-        return JsonResponse({'ok': False, 'error': 'Unauthorized'}, status=401)
+    if not SIRI_TOKEN:
+        logger.error("SIRI_TOKEN environment variable is not set")
+        return JsonResponse({'ok': False, 'error': 'Server misconfiguration: SIRI_TOKEN not set'}, status=500)
+
+    # allow proxies that rename the Authorization header
+    ping_auth = (
+        request.META.get('HTTP_AUTHORIZATION', '') or
+        request.META.get('HTTP_X_AUTHORIZATION', '') or
+        request.META.get('HTTP_X_ORIGINAL_AUTHORIZATION', '') or
+        request.META.get('HTTP_X_HTTP_AUTHORIZATION', '')
+    )
+
+    if not ping_auth:
+        logger.warning("Ping failed: missing Authorization header")
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - missing Authorization header'}, status=401)
+    if not ping_auth.startswith('Bearer '):
+        logger.warning("Ping failed: Authorization header not using Bearer scheme")
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - Authorization header must use Bearer token'}, status=401)
     return JsonResponse({'ok': True, 'message': 'pong'})
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def add_expense(request):
+    # Fail early with clear server-side config errors
+    if not SIRI_TOKEN:
+        logger.error("SIRI_TOKEN environment variable is not set")
+        return JsonResponse({'ok': False, 'error': 'Server misconfiguration: SIRI_TOKEN not set'}, status=500)
+
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if not auth_header:
+        logger.warning("Add expense failed: missing Authorization header")
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - missing Authorization header'}, status=401)
+    if not auth_header.startswith('Bearer '):
+        logger.warning("Add expense failed: Authorization header not using Bearer scheme")
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - Authorization header must use Bearer token'}, status=401)
+
     user = authenticate_user(request)
     if not user:
-        return JsonResponse({'ok': False, 'error': 'Unauthorized - invalid credentials'}, status=401)
+        return JsonResponse({'ok': False, 'error': 'Unauthorized - invalid credentials or token'}, status=401)
     
     # Get data from POST body or GET parameters
     if request.method == 'POST':
