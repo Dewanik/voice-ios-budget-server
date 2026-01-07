@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-%@*qd*&-c_&j)v18#+6_(a49iixkncr$mdi6m5$pd%+n70=uai"
+# Read SECRET_KEY from environment for production; fall back to existing dev key
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-%@*qd*&-c_&j)v18#+6_(a49iixkncr$mdi6m5$pd%+n70=uai",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Default to False in production; enable by setting DJANGO_DEBUG=True
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+# Hostname(s) allowed for this site. Tuned for Azure Web App default hostname.
+ALLOWED_HOSTS = os.environ.get(
+    "ALLOWED_HOSTS", "talk2ledger.azurewebsites.net"
+).split(",")
 
 
 # Application definition
@@ -43,6 +52,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # If you add WhiteNoise to requirements, this serves static files in production
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -118,4 +129,45 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Static files: collect into STATIC_ROOT for serving by the platform (or WhiteNoise)
+STATIC_ROOT = BASE_DIR / "staticfiles"
+# Optional: compressed manifest storage when using WhiteNoise (install whitenoise)
+STATICFILES_STORAGE = os.environ.get(
+    "STATICFILES_STORAGE",
+    "whitenoise.storage.CompressedManifestStaticFilesStorage",
+)
+
 LOGIN_URL = '/accounts/login/'
+
+# Security settings for production (enabled when DEBUG is False)
+if not DEBUG:
+    # Redirect all HTTP to HTTPS on the platform
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS: one year (adjust as needed)
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", 31536000))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Ensure CSRF trusted origins include the Azure site URL
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    "https://talk2ledger.azurewebsites.net",
+).split(",")
+
+# Allow configuring the database via DATABASE_URL (recommended for production).
+# If you want to use this, add `dj-database-url` to your requirements and set
+# the DATABASE_URL environment variable in Azure.
+try:
+    import dj_database_url  # type: ignore
+except Exception:
+    dj_database_url = None
+
+if os.environ.get("DATABASE_URL") and dj_database_url:
+    DATABASES["default"] = dj_database_url.parse(
+        os.environ["DATABASE_URL"], conn_max_age=600, ssl_require=True
+    )
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
