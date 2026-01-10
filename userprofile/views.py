@@ -15,7 +15,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .forms import RegisterUserForm
 from .models import UserSubscription, UserProfile
-from siriapi.models import Expense
+from siriapi.models import Expense, Budget
 
 # Set Stripe API key
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -213,11 +213,38 @@ def user_profile(request):
     recent_expenses = Expense.objects.filter(user=request.user).order_by('-created_at')[:5]
     total_expenses = Expense.objects.filter(user=request.user).count()
     
+    # Get current month budget info
+    from datetime import datetime
+    current_month = datetime.now().strftime('%Y-%m')
+    overall_budget = Budget.objects.filter(user=request.user, period=current_month, category='').first()
+    
+    # Calculate current month spending
+    from django.db.models import Sum
+    current_month_expenses = Expense.objects.filter(
+        user=request.user,
+        created_at__year=datetime.now().year,
+        created_at__month=datetime.now().month
+    )
+    total_spent_this_month = current_month_expenses.aggregate(total=Sum('amount'))['total'] or 0
+    
+    budget_info = None
+    if overall_budget:
+        remaining = overall_budget.amount - total_spent_this_month
+        percent_used = (total_spent_this_month / overall_budget.amount * 100) if overall_budget.amount > 0 else 0
+        budget_info = {
+            'amount': overall_budget.amount,
+            'spent': total_spent_this_month,
+            'remaining': remaining,
+            'percent_used': percent_used,
+            'is_over': remaining < 0,
+        }
+    
     context = {
         'user_profile': user_profile,
         'subscription': subscription,
         'recent_expenses': recent_expenses,
         'total_expenses': total_expenses,
+        'budget_info': budget_info,
     }
     return render(request, 'userprofile/profile.html', context)
 

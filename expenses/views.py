@@ -13,6 +13,35 @@ def landing_page(request):
     return render(request, 'expenses/landing.html')
 
 
+def handle_expense_action(user, request):
+    """Handle delete and update expense actions"""
+    action = request.POST.get('action')
+    if action == 'delete_expense':
+        expense_id = request.POST.get('expense_id')
+        if expense_id:
+            Expense.objects.filter(user=user, id=expense_id).delete()
+            return True
+    elif action == 'update_expense':
+        expense_id = request.POST.get('expense_id')
+        category = request.POST.get('category')
+        amount = request.POST.get('amount')
+        note = request.POST.get('note')
+        if expense_id:
+            try:
+                expense = Expense.objects.get(user=user, id=expense_id)
+                if category:
+                    expense.category = category
+                if amount:
+                    expense.amount = float(amount)
+                if note is not None:
+                    expense.note = note
+                expense.save()
+                return True
+            except (Expense.DoesNotExist, ValueError):
+                pass
+    return False
+
+
 def get_expenses_report(user, start_date, end_date, title, search_query=None):
     expenses = Expense.objects.filter(user=user, created_at__date__range=(start_date, end_date)).order_by('-created_at')
     
@@ -71,6 +100,11 @@ def get_expenses_report(user, start_date, end_date, title, search_query=None):
 @login_required
 def expenses_week(request):
     if request.method == 'POST':
+        # Handle expense actions (delete/update)
+        action = request.POST.get('action')
+        if action in ['delete_expense', 'update_expense']:
+            handle_expense_action(request.user, request)
+            return redirect(request.META.get('HTTP_REFERER', '/week/'))
         # Redirect to range with selected dates
         start_str = request.POST.get('start')
         end_str = request.POST.get('end')
@@ -90,6 +124,11 @@ def expenses_week(request):
 @login_required
 def expenses_month(request):
     if request.method == 'POST':
+        # Handle expense actions (delete/update)
+        action = request.POST.get('action')
+        if action in ['delete_expense', 'update_expense']:
+            handle_expense_action(request.user, request)
+            return redirect(request.META.get('HTTP_REFERER', '/month/'))
         month_str = request.POST.get('month')
         if month_str:
             return redirect(f'/expenses/month/{month_str}/')
@@ -105,12 +144,19 @@ def expenses_month(request):
 @require_http_methods(["GET", "POST"])
 @login_required
 def expenses_month_specific(request, year_month=None):
-    if request.method == 'POST' or not year_month:
-        if request.method == 'POST':
+    if request.method == 'POST':
+        # Handle expense actions (delete/update)
+        action = request.POST.get('action')
+        if action in ['delete_expense', 'update_expense']:
+            handle_expense_action(request.user, request)
+            return redirect(request.META.get('HTTP_REFERER', f'/expenses/month/{year_month}/'))
+        if not year_month:
             year_month = request.POST.get('month')
         if not year_month:
             year_month = timezone.now().strftime('%Y-%m')
         return redirect(f'/expenses/month/{year_month}/')
+    if not year_month:
+        year_month = timezone.now().strftime('%Y-%m')
     try:
         year, month = map(int, year_month.split('-'))
         start = datetime(year, month, 1).date()
@@ -131,6 +177,13 @@ def expenses_month_specific(request, year_month=None):
 @login_required
 def expenses_range(request):
     if request.method == 'POST':
+        # Handle expense actions (delete/update)
+        action = request.POST.get('action')
+        if action in ['delete_expense', 'update_expense']:
+            handle_expense_action(request.user, request)
+            start_str = request.GET.get('start')
+            end_str = request.GET.get('end')
+            return redirect(f'/expenses/range/?start={start_str}&end={end_str}')
         start_str = request.POST.get('start')
         end_str = request.POST.get('end')
         if start_str and end_str:
@@ -157,9 +210,15 @@ def expenses_range(request):
     return render(request, 'expenses/report.html', context)
 
 
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "POST"])
 @login_required
 def expenses_today(request):
+    if request.method == 'POST':
+        # Handle expense actions (delete/update)
+        action = request.POST.get('action')
+        if action in ['delete_expense', 'update_expense']:
+            handle_expense_action(request.user, request)
+            return redirect('/expenses/today/')
     today = timezone.now().date()
     search_query = request.GET.get('search')
     context = get_expenses_report(request.user, today, today, "Today's Expenses", search_query)
@@ -186,27 +245,8 @@ def expenses_budgets(request):
             budget_id = request.POST.get('budget_id')
             if budget_id:
                 Budget.objects.filter(user=request.user, id=budget_id).delete()
-        elif action == 'delete_expense':
-            expense_id = request.POST.get('expense_id')
-            if expense_id:
-                Expense.objects.filter(user=request.user, id=expense_id).delete()
-        elif action == 'update_expense':
-            expense_id = request.POST.get('expense_id')
-            category = request.POST.get('category')
-            amount = request.POST.get('amount')
-            note = request.POST.get('note')
-            if expense_id:
-                try:
-                    expense = Expense.objects.get(user=request.user, id=expense_id)
-                    if category:
-                        expense.category = category
-                    if amount:
-                        expense.amount = float(amount)
-                    if note:
-                        expense.note = note
-                    expense.save()
-                except (Expense.DoesNotExist, ValueError):
-                    pass
+        elif action in ['delete_expense', 'update_expense']:
+            handle_expense_action(request.user, request)
         return redirect(request.META.get('HTTP_REFERER', '/budgets/'))
 
     budgets = Budget.objects.filter(user=request.user).order_by('-period', '-created_at')
