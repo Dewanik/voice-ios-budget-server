@@ -5,26 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #f8f9fa; }
+        body { 
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         .container { max-width: 1200px; }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+        }
+        .navbar-brand { color: white !important; font-weight: bold; }
+        .card { 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: bold;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
+        .btn-primary:hover { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); }
+        .budget-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .budget-item.over-budget {
+            border-left-color: #dc3545;
+        }
+        .budget-item.under-budget {
+            border-left-color: #28a745;
+        }
+        .budget-comparison {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+        .budget-stats {
+            flex: 1;
+        }
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+        }
+        .expense-item {
+            border-left: 4px solid #007bff;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .expense-item .d-flex {
+            justify-content: space-between;
+            align-items: start;
+        }
+        .edit-btn, .delete-btn {
+            margin-left: 5px;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-success { background: #28a745; border: none; }
+        .btn-success:hover { background: #218838; }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">{{ title }}</h1>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container-fluid">
+            <span class="navbar-brand">🎯 Budget Manager</span>
+            <div>
+                <a href="/today/" class="btn btn-outline-light btn-sm">Today</a>
+                <a href="/week/" class="btn btn-outline-light btn-sm">Week</a>
+                <a href="/month/" class="btn btn-outline-light btn-sm">Month</a>
+                <a href="/range/" class="btn btn-outline-light btn-sm">Range</a>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Navigation -->
-        <nav class="mb-4">
-            <a href="/today/" class="btn btn-outline-primary">Today</a>
-            <a href="/week/" class="btn btn-outline-primary">This Week</a>
-            <a href="/month/" class="btn btn-outline-primary">This Month</a>
-        </nav>
+    <div class="container mt-5 mb-5">
+        <h1 class="mb-4"><i class="fas fa-piggy-bank"></i> {{ title }}</h1>
 
         <!-- Add Budget Form -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5>Add New Budget</h5>
+                <h5 class="mb-0"><i class="fas fa-plus"></i> Add New Budget</h5>
             </div>
             <div class="card-body">
                 <form method="post">
@@ -37,40 +111,78 @@
                         </div>
                         <div class="col-md-3">
                             <label for="category">Category (leave blank for overall)</label>
-                            <input type="text" id="category" name="category" class="form-control">
+                            <input type="text" id="category" name="category" class="form-control" placeholder="e.g., Food, Transport">
                         </div>
                         <div class="col-md-3">
-                            <label for="amount">Amount</label>
-                            <input type="number" step="0.01" id="amount" name="amount" class="form-control" required>
+                            <label for="amount">Amount ($)</label>
+                            <input type="number" step="0.01" id="amount" name="amount" class="form-control" required min="0">
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-success">Add Budget</button>
+                            <button type="submit" class="btn btn-success w-100"><i class="fas fa-check"></i> Add Budget</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Existing Budgets -->
+        <!-- Budget vs Spending Comparison -->
+        {% if budget_comparison %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Budget vs Spending</h5>
+            </div>
+            <div class="card-body">
+                {% for item in budget_comparison %}
+                <div class="budget-item {% if item.is_over %}over-budget{% else %}under-budget{% endif %}">
+                    <div class="budget-comparison">
+                        <div class="budget-stats">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <strong>{{ item.budget.period }}</strong> - {{ item.budget.category|default:"Overall Budget" }}
+                                    <br>
+                                    <small class="text-muted">Budget: ${{ item.budget.amount|floatformat:2 }} | Spent: <span class="{% if item.is_over %}text-danger{% else %}text-success{% endif %}">{{ item.spent|floatformat:2 }}</span> | Remaining: <span class="{% if item.is_over %}text-danger font-weight-bold{% else %}text-success{% endif %}">{{ item.remaining|floatformat:2 }}</span></small>
+                                </div>
+                                <div class="text-right">
+                                    <strong class="{% if item.is_over %}text-danger{% else %}text-success{% endif %}">{{ item.percent_used|floatformat:1 }}%</strong>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar {% if item.is_over %}bg-danger{% else %}bg-success{% endif %}" style="width: {{ item.percent_used|floatformat:1 }}%"></div>
+                            </div>
+                        </div>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="budget_id" value="{{ item.budget.id }}">
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Existing Budgets List -->
         <div class="card">
             <div class="card-header">
-                <h5>Existing Budgets</h5>
+                <h5 class="mb-0"><i class="fas fa-list"></i> All Budgets</h5>
             </div>
             <div class="card-body">
                 {% for budget in budgets %}
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-3 p-3" style="background: #f8f9fa; border-radius: 5px;">
                     <div>
-                        <strong>{{ budget.period }}</strong> - {{ budget.category|default:"Overall" }}: ${{ budget.amount|floatformat:2 }}
+                        <strong>{{ budget.period }}</strong> - {{ budget.category|default:"Overall" }}: <span class="h5">${{ budget.amount|floatformat:2 }}</span>
                     </div>
                     <form method="post" class="d-inline">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="budget_id" value="{{ budget.id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Delete</button>
                     </form>
                 </div>
                 {% empty %}
-                <p>No budgets set yet.</p>
+                <p class="text-muted"><i class="fas fa-info-circle"></i> No budgets set yet. Create one above!</p>
                 {% endfor %}
             </div>
         </div>

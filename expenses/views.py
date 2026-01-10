@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from siriapi.models import Expense, Budget
 
 
@@ -12,10 +13,18 @@ def landing_page(request):
     return render(request, 'expenses/landing.html')
 
 
-def get_expenses_report(user, start_date, end_date, title):
+def get_expenses_report(user, start_date, end_date, title, search_query=None):
     expenses = Expense.objects.filter(user=user, created_at__date__range=(start_date, end_date)).order_by('-created_at')
+    
+    # Apply search filter if provided
+    if search_query:
+        expenses = expenses.filter(
+            Q(category__icontains=search_query) | 
+            Q(note__icontains=search_query)
+        )
+    
     total = expenses.aggregate(total=Sum('amount'))['total'] or 0
-    totals_by_category = list(Expense.objects.filter(user=user, created_at__date__range=(start_date, end_date)).values('category').annotate(total=Sum('amount')).order_by('-total'))
+    totals_by_category = list(expenses.values('category').annotate(total=Sum('amount')).order_by('-total'))
     expenses_list = [
         {
             'id': e.id,
@@ -53,6 +62,7 @@ def get_expenses_report(user, start_date, end_date, title):
         'expenses': expenses_list,
         'budget_info': budget_info,
         'chart_data': totals_by_category,  # for pie chart
+        'search_query': search_query,
     }
     return context
 
@@ -70,7 +80,9 @@ def expenses_week(request):
     monday = now - timedelta(days=now.weekday())
     start = monday.date()
     end = (monday + timedelta(days=6)).date()
-    context = get_expenses_report(request.user, start, end, "This Week's Expenses")
+    search_query = request.GET.get('search')
+    context = get_expenses_report(request.user, start, end, "This Week's Expenses", search_query)
+    context['show_form'] = True
     return render(request, 'expenses/report.html', context)
 
 
@@ -84,7 +96,9 @@ def expenses_month(request):
     now = timezone.now()
     start = now.replace(day=1).date()
     end = now.date()
-    context = get_expenses_report(request.user, start, end, "Current Month Expenses")
+    search_query = request.GET.get('search')
+    context = get_expenses_report(request.user, start, end, "Current Month Expenses", search_query)
+    context['show_form'] = True
     return render(request, 'expenses/report.html', context)
 
 
@@ -107,7 +121,9 @@ def expenses_month_specific(request, year_month=None):
         title = f"Expenses for {start.strftime('%B %Y')}"
     except ValueError:
         return render(request, 'expenses/error.html', {'error': 'Invalid month format. Use YYYY-MM'})
-    context = get_expenses_report(request.user, start, end, title)
+    search_query = request.GET.get('search')
+    context = get_expenses_report(request.user, start, end, title, search_query)
+    context['show_form'] = True
     return render(request, 'expenses/report.html', context)
 
 
@@ -133,7 +149,11 @@ def expenses_range(request):
         title = f"Expenses from {start.strftime('%B %d, %Y')} to {end.strftime('%B %d, %Y')}"
     except ValueError:
         return render(request, 'expenses/error.html', {'error': 'Invalid date format. Use YYYY-MM-DD'})
-    context = get_expenses_report(request.user, start, end, title)
+    search_query = request.GET.get('search')
+    context = get_expenses_report(request.user, start, end, title, search_query)
+    context['show_form'] = True
+    context['current_start'] = start_str
+    context['current_end'] = end_str
     return render(request, 'expenses/report.html', context)
 
 
@@ -141,7 +161,9 @@ def expenses_range(request):
 @login_required
 def expenses_today(request):
     today = timezone.now().date()
-    context = get_expenses_report(request.user, today, today, "Today's Expenses")
+    search_query = request.GET.get('search')
+    context = get_expenses_report(request.user, today, today, "Today's Expenses", search_query)
+    context['show_form'] = True
     return render(request, 'expenses/report.html', context)
 
 
@@ -157,19 +179,69 @@ def expenses_budgets(request):
             if period and amount:
                 try:
                     amount = float(amount)
-                    Budget.objects.get_or_create(user=request.user, period=period, category=category, defaults={'amount': amount})
+                    Budget.objects.update_or_create(user=request.user, period=period, category=category, defaults={'amount': amount})
                 except ValueError:
                     pass
         elif action == 'delete':
             budget_id = request.POST.get('budget_id')
             if budget_id:
                 Budget.objects.filter(user=request.user, id=budget_id).delete()
-        return redirect('/budgets/')
+        elif action == 'delete_expense':
+            expense_id = request.POST.get('expense_id')
+            if expense_id:
+                Expense.objects.filter(user=request.user, id=expense_id).delete()
+        elif action == 'update_expense':
+            expense_id = request.POST.get('expense_id')
+            category = request.POST.get('category')
+            amount = request.POST.get('amount')
+            note = request.POST.get('note')
+            if expense_id:
+                try:
+                    expense = Expense.objects.get(user=request.user, id=expense_id)
+                    if category:
+                        expense.category = category
+                    if amount:
+                        expense.amount = float(amount)
+                    if note:
+                        expense.note = note
+                    expense.save()
+                except (Expense.DoesNotExist, ValueError):
+                    pass
+        return redirect(request.META.get('HTTP_REFERER', '/budgets/'))
 
-    budgets = Budget.objects.filter(user=request.user).order_by('-created_at')
+    budgets = Budget.objects.filter(user=request.user).order_by('-period', '-created_at')
+    
+    # Get budget vs spending data
+    budget_comparison = []
+    for budget in budgets:
+        # Get expenses for this budget period
+        year, month = budget.period.split('-')
+        start = datetime(int(year), int(month), 1).date()
+        if int(month) == 12:
+            end = datetime(int(year) + 1, 1, 1).date() - timedelta(days=1)
+        else:
+            end = datetime(int(year), int(month) + 1, 1).date() - timedelta(days=1)
+        
+        if budget.category:
+            expenses = Expense.objects.filter(user=request.user, category=budget.category, 
+                                             created_at__date__range=(start, end))
+        else:
+            expenses = Expense.objects.filter(user=request.user, 
+                                             created_at__date__range=(start, end))
+        
+        spent = expenses.aggregate(total=Sum('amount'))['total'] or 0
+        budget_comparison.append({
+            'budget': budget,
+            'spent': spent,
+            'remaining': budget.amount - spent,
+            'percent_used': (spent / budget.amount * 100) if budget.amount > 0 else 0,
+            'is_over': spent > budget.amount,
+        })
+    
     context = {
         'title': 'Manage Budgets',
         'budgets': budgets,
+        'budget_comparison': budget_comparison,
         'show_budgets': True,
     }
     return render(request, 'expenses/budgets.html', context)
