@@ -214,16 +214,21 @@ def user_profile(request):
     total_expenses = Expense.objects.filter(user=request.user).count()
     
     # Get current month budget info
-    from datetime import datetime
+    from datetime import datetime, timedelta
     current_month = datetime.now().strftime('%Y-%m')
     overall_budget = Budget.objects.filter(user=request.user, period=current_month, category='').first()
     
-    # Calculate current month spending
+    # Calculate current month spending using date range (more reliable with timezones)
     from django.db.models import Sum
+    start_date = datetime.now().replace(day=1).date()
+    if datetime.now().month == 12:
+        end_date = datetime(datetime.now().year + 1, 1, 1).date() - timedelta(days=1)
+    else:
+        end_date = datetime(datetime.now().year, datetime.now().month + 1, 1).date() - timedelta(days=1)
+    
     current_month_expenses = Expense.objects.filter(
         user=request.user,
-        created_at__year=datetime.now().year,
-        created_at__month=datetime.now().month
+        created_at__date__range=(start_date, end_date)
     )
     total_spent_this_month = current_month_expenses.aggregate(total=Sum('amount'))['total'] or 0
     
