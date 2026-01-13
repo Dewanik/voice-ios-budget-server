@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as tz
 from django.db.models import Sum, Q
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -43,7 +43,11 @@ def handle_expense_action(user, request):
 
 
 def get_expenses_report(user, start_date, end_date, title, search_query=None):
-    expenses = Expense.objects.filter(user=user, created_at__date__range=(start_date, end_date)).order_by('-created_at')
+    # Convert dates to timezone-aware datetime boundaries to avoid timezone conversion issues
+    start_datetime = datetime.combine(start_date, datetime.min.time(), tzinfo=tz.utc)
+    end_datetime = datetime.combine(end_date, datetime.max.time(), tzinfo=tz.utc)
+    
+    expenses = Expense.objects.filter(user=user, created_at__range=(start_datetime, end_datetime)).order_by('-created_at')
     
     # Apply search filter if provided
     if search_query:
@@ -134,7 +138,11 @@ def expenses_month(request):
             return redirect(f'/expenses/month/{month_str}/')
     now = timezone.now()
     start = now.replace(day=1).date()
-    end = now.date()
+    # Calculate last day of the month
+    if now.month == 12:
+        end = datetime(now.year + 1, 1, 1).date() - timedelta(days=1)
+    else:
+        end = datetime(now.year, now.month + 1, 1).date() - timedelta(days=1)
     search_query = request.GET.get('search')
     context = get_expenses_report(request.user, start, end, "Current Month Expenses", search_query)
     context['show_form'] = True
