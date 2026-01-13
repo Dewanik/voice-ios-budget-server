@@ -131,6 +131,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/profile/profile/'
+
+# Session Configuration - Ensure data persistence
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use database for session storage
+SESSION_COOKIE_AGE = 86400 * 30  # 30 days in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep sessions after browser closes
+CSRF_COOKIE_AGE = 86400 * 30  # Match session age
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read (needed for CSRF token)
 
 # Production security settings for Azure
 SECURE_SSL_REDIRECT = False  # Handled by Azure reverse proxy
